@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
+import { dataService } from '../services/dataService';
 import './ScratchEditor.css';
 
 // 在组件外部注册自定义积木块的代码生成器
@@ -963,6 +964,23 @@ const ScratchEditor: React.FC = () => {
       const xmlDom = parser.parseFromString(initialXml, 'text/xml');
       Blockly.Xml.domToWorkspace(xmlDom.documentElement, workspaceRef.current!);
 
+      // 添加工作区变化监听器，自动保存到数据服务
+      if (workspaceRef.current) {
+        workspaceRef.current.addChangeListener((event: any) => {
+          // 忽略UI事件和气泡事件，只关注块的变化
+          if (event.type === Blockly.Events.BLOCK_CHANGE || 
+              event.type === Blockly.Events.BLOCK_CREATE ||
+              event.type === Blockly.Events.BLOCK_DELETE ||
+              event.type === Blockly.Events.BLOCK_MOVE) {
+            // 防抖处理：延迟更新数据服务
+            clearTimeout((window as any).workspaceUpdateTimeout);
+            (window as any).workspaceUpdateTimeout = setTimeout(() => {
+              updateWorkspaceData();
+            }, 1000); // 1秒延迟
+          }
+        });
+      }
+
       return () => {
         if (workspaceRef.current) {
           workspaceRef.current.dispose();
@@ -987,29 +1005,60 @@ const ScratchEditor: React.FC = () => {
   const clearWorkspace = () => {
     if (workspaceRef.current) {
       workspaceRef.current.clear();
+      // 清除后更新数据服务
+      updateWorkspaceData();
+    }
+  };
+
+  // 更新工作区数据到数据服务
+  const updateWorkspaceData = () => {
+    if (!workspaceRef.current) return;
+    
+    try {
+      const xml = Blockly.Xml.workspaceToDom(workspaceRef.current);
+      const xmlText = Blockly.Xml.domToText(xml);
+      
+      // 获取工作区中的所有块
+      const blocks = workspaceRef.current.getAllBlocks();
+      const blockData = blocks.map(block => ({
+        id: block.id,
+        type: block.type,
+        x: block.getRelativeToSurfaceXY().x,
+        y: block.getRelativeToSurfaceXY().y
+      }));
+      
+      // 获取变量和函数
+      const variables = workspaceRef.current.getAllVariableNames();
+      const functions: any[] = []; // 这里可以扩展获取自定义函数
+      
+      // 更新数据服务
+      dataService.updateWorkspaceState(xmlText, blockData, variables, functions);
+      
+      console.log('工作区数据已更新到数据服务');
+    } catch (error) {
+      console.error('更新工作区数据失败:', error);
     }
   };
 
   const saveWorkspace = () => {
     if (workspaceRef.current) {
-      const xml = Blockly.Xml.workspaceToDom(workspaceRef.current);
-      const xmlText = Blockly.Xml.domToText(xml);
-      localStorage.setItem('smartdog_workspace', xmlText);
-      alert('工作区已保存到本地存储');
+      updateWorkspaceData();
+      alert('工作区已保存到数据服务');
     }
   };
 
   const loadWorkspace = () => {
     if (workspaceRef.current) {
-      const saved = localStorage.getItem('smartdog_workspace');
-      if (saved) {
+      // 从数据服务加载数据
+      const currentData = dataService.getCurrentData();
+      if (currentData && currentData.workspace.xml) {
         const parser = new DOMParser();
-        const xmlDom = parser.parseFromString(saved, 'text/xml');
+        const xmlDom = parser.parseFromString(currentData.workspace.xml, 'text/xml');
         workspaceRef.current.clear();
         Blockly.Xml.domToWorkspace(xmlDom.documentElement, workspaceRef.current);
-        alert('工作区已从本地存储加载');
+        alert('工作区已从数据服务加载');
       } else {
-        alert('没有找到保存的工作区');
+        alert('没有找到保存的工作区数据');
       }
     }
   };

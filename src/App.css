@@ -171,3 +171,94 @@ button:disabled {
 .status-connecting {
   background-color: #ff9800;
 }
+
+/* 新的头部样式 */
+.header-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-title {
+  text-align: center;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  gap: 20px;
+}
+
+.header-controls .header-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 0;
+}
+
+/* 当前项目信息样式 */
+.current-project-info {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-size: 14px;
+}
+
+.project-name-badge {
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.project-version {
+  color: #bbdefb;
+}
+
+.project-modified {
+  color: #e3f2fd;
+  font-style: italic;
+}
+
+/* 底部项目信息 */
+.footer-project-info {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.footer-project-info span {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .current-project-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .footer-project-info {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

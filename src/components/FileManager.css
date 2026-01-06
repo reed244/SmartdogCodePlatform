@@ -1,0 +1,456 @@
+/* 文件管理器样式 */
+
+.file-manager {
+  position: relative;
+  display: inline-block;
+}
+
+.file-manager-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.file-manager-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.file-manager-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 文件菜单 */
+.file-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  margin-top: 10px;
+  z-index: 1000;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.file-menu-section {
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.file-menu-section:last-child {
+  border-bottom: none;
+}
+
+.file-menu-section h3 {
+  margin: 0 0 10px 15px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.file-menu button:hover {
+  background: #f5f5f5;
+  color: #667eea;
+}
+
+.file-menu button:active {
+  background: #e8e8e8;
+}
+
+/* 模态框 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 最近项目列表 */
+.recent-projects-list {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  padding: 40px 0;
+  font-style: italic;
+}
+
+.recent-project-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.recent-project-item:hover {
+  background: #e3f2fd;
+  border-color: #bbdefb;
+  transform: translateX(5px);
+}
+
+.project-icon {
+  font-size: 24px;
+  margin-right: 15px;
+  color: #667eea;
+}
+
+.project-info {
+  flex: 1;
+}
+
+.project-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.project-meta {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.project-path {
+  font-size: 11px;
+  color: #999;
+  font-family: 'Monaco', 'Consolas', monospace;
+  word-break: break-all;
+}
+
+/* 项目信息内容 */
+.project-info-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.info-section {
+  margin-bottom: 24px;
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.info-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #667eea;
+  font-weight: 600;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 6px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.info-label {
+  width: 120px;
+  font-weight: 500;
+  color: #666;
+  font-size: 14px;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+  font-size: 14px;
+}
+
+/* 模态框底部 */
+.modal-footer {
+  padding: 16px 24px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-footer button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.modal-footer button:first-child {
+  background: #f44336;
+  color: white;
+}
+
+.modal-footer button:first-child:hover {
+  background: #d32f2f;
+}
+
+.modal-footer button:last-child {
+  background: #667eea;
+  color: white;
+}
+
+.modal-footer button:last-child:hover {
+  background: #5a67d8;
+}
+
+/* 项目状态指示器 */
+.project-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 20px;
+  padding: 6px 12px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.project-name {
+  font-weight: 500;
+  color: #667eea;
+  margin-right: 8px;
+}
+
+.auto-save-indicator {
+  font-size: 12px;
+  color: #4caf50;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* 工作区统计样式 */
+.workspace-stats {
+  padding: 10px 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* 自定义积木块列表 */
+.custom-blocks-list {
+  margin-top: 10px;
+}
+
+.custom-block-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.block-color-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.block-info {
+  flex: 1;
+}
+
+.block-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.block-category {
+  font-size: 11px;
+  color: #666;
+}
+
+/* 工作区状态指示器 */
+.workspace-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 15px;
+  padding: 4px 10px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 4px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  font-size: 13px;
+}
+
+.status-icon {
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+.status-text {
+  color: #555;
+}
+
+/* 工作区信息文本 */
+.info-text {
+  padding: 0 15px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.block-count {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #666;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .info-row {
+    flex-direction: column;
+  }
+  
+  .info-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  
+  .project-status {
+    display: none;
+  }
+  
+  .workspace-status {
+    display: none;
+  }
+}

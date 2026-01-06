@@ -74,10 +74,38 @@ const FileManager: React.FC<FileManagerProps> = ({
 
   // 保存工作区数据到文件
   const handleSaveToFile = () => {
+    const currentData = dataService.getCurrentData();
+    if (!currentData) {
+      alert('没有工作区数据可导出');
+      return;
+    }
+    
     const filename = prompt('请输入文件名:', 'smartdog_workspace.json');
     if (filename) {
-      dataService.exportToFile(filename);
-      alert(`工作区数据已保存为文件: ${filename}`);
+      try {
+        // 创建Blob对象
+        const jsonContent = JSON.stringify(currentData, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json' });
+        
+        // 创建下载链接
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.href = url;
+        link.download = filename;
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 释放URL对象
+        URL.revokeObjectURL(url);
+        
+        alert(`工作区数据已保存为文件: ${filename}`);
+      } catch (error) {
+        alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      }
     }
   };
 
@@ -93,16 +121,35 @@ const FileManager: React.FC<FileManagerProps> = ({
       
       if (file) {
         try {
-          const loadedData = await dataService.importFromFile(file);
+          const content = await readFileAsText(file);
+          const importedData = JSON.parse(content);
           
-          setCurrentData(loadedData);
-          setShowMenu(false);
-          
-          if (onDataLoaded) {
-            onDataLoaded(loadedData);
+          // 验证导入数据
+          if (!importedData.workspace || !importedData.customBlocks) {
+            throw new Error('文件格式无效：缺少工作区或自定义积木块数据');
           }
           
-          alert(`工作区数据已从文件 "${file.name}" 加载`);
+          // 更新数据服务
+          dataService.updateWorkspaceState(
+            importedData.workspace.xml,
+            importedData.workspace.blocks || [],
+            importedData.workspace.variables || [],
+            importedData.workspace.functions || []
+          );
+          
+          dataService.updateCustomBlocks(importedData.customBlocks || []);
+          
+          const loadedData = dataService.getCurrentData();
+          if (loadedData) {
+            setCurrentData(loadedData);
+            setShowMenu(false);
+            
+            if (onDataLoaded) {
+              onDataLoaded(loadedData);
+            }
+            
+            alert(`工作区数据已从文件 "${file.name}" 加载`);
+          }
         } catch (error) {
           alert(`加载失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
@@ -110,6 +157,27 @@ const FileManager: React.FC<FileManagerProps> = ({
     };
     
     fileInput.click();
+  };
+
+  // 读取文件为文本
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error('文件读取失败'));
+        }
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('文件读取错误'));
+      };
+      
+      reader.readAsText(file);
+    });
   };
 
   // 导出工作区为XML

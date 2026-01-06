@@ -870,66 +870,66 @@ const ScratchEditor: React.FC = () => {
       };
 
       // 动态加载自定义积木块
-      const loadCustomBlocks = () => {
-        try {
-          const savedBlocks = localStorage.getItem('smartdog_custom_blocks');
-          if (savedBlocks) {
-            const customBlocks = JSON.parse(savedBlocks);
-            
-            // 为每个自定义积木块创建工具箱条目
-            const customCategoryIndex = toolboxConfig.contents.findIndex(
-              (cat: any) => cat.name === '自定义积木块'
-            );
-            
-            if (customCategoryIndex !== -1) {
-              toolboxConfig.contents[customCategoryIndex].contents = customBlocks.map((block: any) => ({
-                kind: 'block',
-                type: `custom_${block.id}`
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('加载自定义积木块失败:', error);
-        }
-      };
+  const loadCustomBlocks = () => {
+    try {
+      // 从数据服务加载自定义积木块
+      const currentData = dataService.getCurrentData();
+      const customBlocks = currentData?.customBlocks || [];
+      
+      // 为每个自定义积木块创建工具箱条目
+      const customCategoryIndex = toolboxConfig.contents.findIndex(
+        (cat: any) => cat.name === '自定义积木块'
+      );
+      
+      if (customCategoryIndex !== -1) {
+        toolboxConfig.contents[customCategoryIndex].contents = customBlocks.map((block: any) => ({
+          kind: 'block',
+          type: `custom_${block.id}`
+        }));
+      }
+    } catch (error) {
+      console.error('加载自定义积木块失败:', error);
+    }
+  };
 
-      // 监听自定义积木块更新
-      const handleCustomBlocksUpdate = () => {
-        loadCustomBlocks();
-        if (workspaceRef.current) {
-          workspaceRef.current.updateToolbox(toolboxConfig);
-        }
-      };
+  // 监听自定义积木块更新
+  const handleCustomBlocksUpdate = () => {
+    loadCustomBlocks();
+    if (workspaceRef.current) {
+      workspaceRef.current.updateToolbox(toolboxConfig);
+    }
+  };
 
-      // 初始加载自定义积木块
-      loadCustomBlocks();
+  // 初始加载自定义积木块
+  loadCustomBlocks();
 
-      // 创建Blockly工作区
-      workspaceRef.current = Blockly.inject(blocklyDiv.current, {
-        toolbox: toolboxConfig,
-        grid: {
-          spacing: 20,
-          length: 3,
-          colour: '#ccc',
-          snap: true
-        },
-        zoom: {
-          controls: true,
-          wheel: true,
-          startScale: 1.0,
-          maxScale: 3,
-          minScale: 0.3,
-          scaleSpeed: 1.2
-        },
-        trashcan: true,
-        horizontalLayout: false,
-        toolboxPosition: 'start',
-        css: true,
-        renderer: 'zelos',
-        theme: Blockly.Themes.Zelos
-      });
+  // 创建Blockly工作区
+  workspaceRef.current = Blockly.inject(blocklyDiv.current, {
+    toolbox: toolboxConfig,
+    grid: {
+      spacing: 20,
+      length: 3,
+      colour: '#ccc',
+      snap: true
+    },
+    zoom: {
+      controls: true,
+      wheel: true,
+      startScale: 1.0,
+      maxScale: 3,
+      minScale: 0.3,
+      scaleSpeed: 1.2
+    },
+    trashcan: true,
+    horizontalLayout: false,
+    toolboxPosition: 'start',
+    css: true,
+    renderer: 'zelos',
+    theme: Blockly.Themes.Zelos
+  });
 
-      window.addEventListener('customBlocksUpdated', handleCustomBlocksUpdate);
+  // 监听数据服务事件
+  window.addEventListener('customBlocksChanged', handleCustomBlocksUpdate);
 
       // 添加上下文菜单（右键菜单）支持断点
       if (workspaceRef.current) {
@@ -986,7 +986,7 @@ const ScratchEditor: React.FC = () => {
           workspaceRef.current.dispose();
           workspaceRef.current = null;
         }
-        window.removeEventListener('customBlocksUpdated', handleCustomBlocksUpdate);
+        window.removeEventListener('customBlocksChanged', handleCustomBlocksUpdate);
       };
     }
   }, []);
@@ -1058,7 +1058,17 @@ const ScratchEditor: React.FC = () => {
         Blockly.Xml.domToWorkspace(xmlDom.documentElement, workspaceRef.current);
         alert('工作区已从数据服务加载');
       } else {
-        alert('没有找到保存的工作区数据');
+        // 尝试从localStorage加载
+        const loadedData = dataService.loadFromLocalStorage();
+        if (loadedData && loadedData.workspace.xml) {
+          const parser = new DOMParser();
+          const xmlDom = parser.parseFromString(loadedData.workspace.xml, 'text/xml');
+          workspaceRef.current.clear();
+          Blockly.Xml.domToWorkspace(xmlDom.documentElement, workspaceRef.current);
+          alert('工作区已从本地存储加载');
+        } else {
+          alert('没有找到保存的工作区数据');
+        }
       }
     }
   };

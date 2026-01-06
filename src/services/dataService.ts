@@ -45,14 +45,14 @@ class DataService {
     return DataService.instance;
   }
 
-  // ==================== 工作区数据操作 ====================
+  // ==================== 核心数据操作 ====================
 
   // 获取当前工作区数据
   getCurrentData(): WorkspaceData | null {
     return this.currentData;
   }
 
-  // 初始化或重置工作区数据
+  // 初始化工作区数据
   initializeWorkspace(): WorkspaceData {
     this.currentData = {
       workspace: {
@@ -64,9 +64,9 @@ class DataService {
       customBlocks: []
     };
     
-    // 保存到localStorage
     this.saveToLocalStorage();
-    
+    this.notifyWorkspaceChanged();
+    this.notifyCustomBlocksChanged();
     return this.currentData;
   }
 
@@ -76,17 +76,8 @@ class DataService {
       this.currentData = this.initializeWorkspace();
     }
     
-    this.currentData.workspace = {
-      xml,
-      blocks,
-      variables,
-      functions
-    };
-    
-    // 保存到localStorage
+    this.currentData.workspace = { xml, blocks, variables, functions };
     this.saveToLocalStorage();
-    
-    // 通知工作区变化
     this.notifyWorkspaceChanged();
   }
 
@@ -97,11 +88,7 @@ class DataService {
     }
     
     this.currentData.customBlocks = customBlocks;
-    
-    // 保存到localStorage
     this.saveToLocalStorage();
-    
-    // 通知自定义积木块更新
     this.notifyCustomBlocksChanged();
   }
 
@@ -112,28 +99,19 @@ class DataService {
     }
     
     this.currentData.customBlocks.push(block);
-    
-    // 保存到localStorage
     this.saveToLocalStorage();
-    
-    // 通知自定义积木块更新
     this.notifyCustomBlocksChanged();
   }
 
   // 删除自定义积木块
   removeCustomBlock(blockId: string): void {
-    if (!this.currentData) {
-      return;
-    }
+    if (!this.currentData) return;
     
     this.currentData.customBlocks = this.currentData.customBlocks.filter(
       block => block.id !== blockId
     );
     
-    // 保存到localStorage
     this.saveToLocalStorage();
-    
-    // 通知自定义积木块更新
     this.notifyCustomBlocksChanged();
   }
 
@@ -141,13 +119,10 @@ class DataService {
 
   // 保存到localStorage
   private saveToLocalStorage(): void {
-    if (!this.currentData) {
-      return;
-    }
+    if (!this.currentData) return;
     
     try {
       localStorage.setItem('smartdog_workspace_data', JSON.stringify(this.currentData));
-      console.log('工作区数据已保存到本地存储');
     } catch (error) {
       console.error('保存到本地存储失败:', error);
     }
@@ -157,15 +132,13 @@ class DataService {
   loadFromLocalStorage(): WorkspaceData | null {
     try {
       const savedData = localStorage.getItem('smartdog_workspace_data');
-      if (!savedData) {
-        return null;
-      }
+      if (!savedData) return null;
       
       const parsedData = JSON.parse(savedData);
       
       // 基本验证
       if (!parsedData.workspace || !parsedData.customBlocks) {
-        console.warn('本地存储数据格式无效，使用默认数据');
+        console.warn('本地存储数据格式无效');
         return null;
       }
       
@@ -174,7 +147,6 @@ class DataService {
         customBlocks: parsedData.customBlocks || []
       };
       
-      console.log('工作区数据已从本地存储加载');
       return this.currentData;
     } catch (error) {
       console.error('从本地存储加载失败:', error);
@@ -187,98 +159,9 @@ class DataService {
     try {
       localStorage.removeItem('smartdog_workspace_data');
       this.currentData = null;
-      console.log('本地存储数据已清除');
     } catch (error) {
       console.error('清除本地存储失败:', error);
     }
-  }
-
-  // ==================== 文件导入导出 ====================
-
-  // 导出工作区数据为JSON文件
-  exportToFile(filename: string = 'smartdog_workspace.json'): void {
-    if (!this.currentData) {
-      console.warn('没有工作区数据可导出');
-      return;
-    }
-    
-    try {
-      // 创建Blob对象
-      const jsonContent = JSON.stringify(this.currentData, null, 2);
-      const blob = new Blob([jsonContent], { type: 'application/json' });
-      
-      // 创建下载链接
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      
-      link.href = url;
-      link.download = filename;
-      
-      // 触发下载
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // 释放URL对象
-      URL.revokeObjectURL(url);
-      
-      console.log('工作区数据已导出:', filename);
-    } catch (error) {
-      console.error('导出工作区数据失败:', error);
-    }
-  }
-
-  // 从文件导入工作区数据
-  async importFromFile(file: File): Promise<WorkspaceData> {
-    try {
-      const content = await this.readFileAsText(file);
-      const importedData = JSON.parse(content);
-      
-      // 验证导入数据
-      if (!importedData.workspace || !importedData.customBlocks) {
-        throw new Error('文件格式无效：缺少工作区或自定义积木块数据');
-      }
-      
-      // 设置当前数据
-      this.currentData = {
-        workspace: importedData.workspace,
-        customBlocks: importedData.customBlocks || []
-      };
-      
-      // 保存到localStorage
-      this.saveToLocalStorage();
-      
-      // 通知数据已导入
-      this.notifyWorkspaceChanged();
-      this.notifyCustomBlocksChanged();
-      
-      console.log('工作区数据已从文件导入');
-      return this.currentData;
-    } catch (error) {
-      console.error('导入工作区数据失败:', error);
-      throw new Error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  }
-
-  // 读取文件为文本
-  private readFileAsText(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          resolve(event.target.result as string);
-        } else {
-          reject(new Error('文件读取失败'));
-        }
-      };
-      
-      reader.onerror = () => {
-        reject(new Error('文件读取错误'));
-      };
-      
-      reader.readAsText(file);
-    });
   }
 
   // ==================== 事件通知 ====================

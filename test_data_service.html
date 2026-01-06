@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据服务测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>数据服务测试</h1>
+        <p>测试工作区数据和自定义积木块的保存加载功能</p>
+        
+        <div class="test-section">
+            <h3>1. 初始化数据服务</h3>
+            <button onclick="testInitialize()">初始化工作区</button>
+            <div id="initResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 更新工作区数据</h3>
+            <button onclick="testUpdateWorkspace()">更新工作区</button>
+            <div id="updateResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. 自定义积木块操作</h3>
+            <button onclick="testAddCustomBlock()">添加自定义积木块</button>
+            <button onclick="testRemoveCustomBlock()">删除自定义积木块</button>
+            <div id="customBlockResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 本地存储操作</h3>
+            <button onclick="testSaveToLocalStorage()">保存到本地存储</button>
+            <button onclick="testLoadFromLocalStorage()">从本地存储加载</button>
+            <button onclick="testClearLocalStorage()">清除本地存储</button>
+            <div id="storageResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. 事件监听测试</h3>
+            <button onclick="testEventListeners()">测试事件监听</button>
+            <div id="eventResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>6. 完整流程测试</h3>
+            <button onclick="(async function() { try { await testFullWorkflow(); } catch(e) { console.error('测试流程错误:', e); } })()">运行完整测试流程</button>
+            <div id="fullTestResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 数据服务实现（简化版，去掉TypeScript类型）
+        class DataService {
+            static instance = null;
+            currentData = null;
+            
+            static getInstance() {
+                if (!DataService.instance) {
+                    DataService.instance = new DataService();
+                }
+                return DataService.instance;
+            }
+
+            getCurrentData() {
+                return this.currentData;
+            }
+
+            initializeWorkspace() {
+                this.currentData = {
+                    workspace: {
+                        xml: '',
+                        blocks: [],
+                        variables: [],
+                        functions: []
+                    },
+                    customBlocks: []
+                };
+                
+                this.saveToLocalStorage();
+                this.notifyWorkspaceChanged();
+                this.notifyCustomBlocksChanged();
+                return this.currentData;
+            }
+
+            updateWorkspaceState(xml, blocks, variables, functions) {
+                if (!this.currentData) {
+                    this.currentData = this.initializeWorkspace();
+                }
+                
+                this.currentData.workspace = { xml, blocks, variables, functions };
+                this.saveToLocalStorage();
+                this.notifyWorkspaceChanged();
+            }
+
+            updateCustomBlocks(customBlocks) {
+                if (!this.currentData) {
+                    this.currentData = this.initializeWorkspace();
+                }
+                
+                this.currentData.customBlocks = customBlocks;
+                this.saveToLocalStorage();
+                this.notifyCustomBlocksChanged();
+            }
+
+            addCustomBlock(block) {
+                if (!this.currentData) {
+                    this.currentData = this.initializeWorkspace();
+                }
+                
+                this.currentData.customBlocks.push(block);
+                this.saveToLocalStorage();
+                this.notifyCustomBlocksChanged();
+            }
+
+            removeCustomBlock(blockId) {
+                if (!this.currentData) return;
+                
+                this.currentData.customBlocks = this.currentData.customBlocks.filter(
+                    block => block.id !== blockId
+                );
+                
+                this.saveToLocalStorage();
+                this.notifyCustomBlocksChanged();
+            }
+
+            saveToLocalStorage() {
+                if (!this.currentData) return;
+                
+                try {
+                    localStorage.setItem('smartdog_workspace_data', JSON.stringify(this.currentData));
+                } catch (error) {
+                    console.error('保存到本地存储失败:', error);
+                }
+            }
+
+            loadFromLocalStorage() {
+                try {
+                    const savedData = localStorage.getItem('smartdog_workspace_data');
+                    if (!savedData) return null;
+                    
+                    const parsedData = JSON.parse(savedData);
+                    
+                    // 基本验证
+                    if (!parsedData.workspace || !parsedData.customBlocks) {
+                        console.warn('本地存储数据格式无效');
+                        return null;
+                    }
+                    
+                    this.currentData = {
+                        workspace: parsedData.workspace,
+                        customBlocks: parsedData.customBlocks || []
+                    };
+                    
+                    return this.currentData;
+                } catch (error) {
+                    console.error('从本地存储加载失败:', error);
+                    return null;
+                }
+            }
+
+            clearLocalStorage() {
+                try {
+                    localStorage.removeItem('smartdog_workspace_data');
+                    this.currentData = null;
+                } catch (error) {
+                    console.error('清除本地存储失败:', error);
+                }
+            }
+
+            notifyWorkspaceChanged() {
+                const event = new CustomEvent('workspaceChanged', {
+                    detail: { data: this.currentData }
+                });
+                window.dispatchEvent(event);
+            }
+
+            notifyCustomBlocksChanged() {
+                const event = new CustomEvent('customBlocksChanged', {
+                    detail: { customBlocks: this.currentData?.customBlocks }
+                });
+                window.dispatchEvent(event);
+            }
+        }
+
+        // 创建全局数据服务实例
+        const dataService = DataService.getInstance();
+    </script>
+
+    <script>
+        // 测试函数
+        let testResults = [];
+        
+        function logResult(section, message, isError = false) {
+            const resultDiv = document.getElementById(section + 'Result');
+            if (resultDiv) {
+                resultDiv.innerHTML = `<span class="${isError ? 'error' : 'success'}">${message}</span>`;
+            }
+            testResults.push({ section, message, isError });
+        }
+        
+        function testInitialize() {
+            try {
+                const data = dataService.initializeWorkspace();
+                if (data && data.workspace && data.customBlocks) {
+                    logResult('init', '✓ 工作区初始化成功\n' + JSON.stringify(data, null, 2));
+                } else {
+                    logResult('init', '✗ 工作区初始化失败：数据结构不完整', true);
+                }
+            } catch (error) {
+                logResult('init', `✗ 工作区初始化失败：${error.message}`, true);
+            }
+        }
+        
+        function testUpdateWorkspace() {
+            try {
+                const testXml = '<xml><block type="test_block" x="100" y="100"></block></xml>';
+                const testBlocks = [{ id: 'test1', type: 'test_block', x: 100, y: 100 }];
+                const testVariables = ['var1', 'var2'];
+                const testFunctions = [{ name: 'testFunc', params: [] }];
+                
+                dataService.updateWorkspaceState(testXml, testBlocks, testVariables, testFunctions);
+                const currentData = dataService.getCurrentData();
+                
+                if (currentData && 
+                    currentData.workspace.xml === testXml &&
+                    currentData.workspace.blocks.length === 1 &&
+                    currentData.workspace.variables.length === 2) {
+                    logResult('update', '✓ 工作区更新成功\n' + JSON.stringify(currentData.workspace, null, 2));
+                } else {
+                    logResult('update', '✗ 工作区更新失败：数据不匹配', true);
+                }
+            } catch (error) {
+                logResult('update', `✗ 工作区更新失败：${error.message}`, true);
+            }
+        }
+        
+        function testAddCustomBlock() {
+            try {
+                const testBlock = {
+                    id: 'custom_test_' + Date.now(),
+                    name: '测试积木块',
+                    category: '测试',
+                    color: '#FF5733',
+                    inputs: [
+                        { type: 'field_number', name: 'value', value: 1 }
+                    ],
+                    code: 'console.log("测试积木块");'
+                };
+                
+                dataService.addCustomBlock(testBlock);
+                const currentData = dataService.getCurrentData();
+                
+                if (currentData && currentData.customBlocks.some(b => b.id === testBlock.id)) {
+                    logResult('customBlock', `✓ 自定义积木块添加成功\nID: ${testBlock.id}\n名称: ${testBlock.name}`);
+                } else {
+                    logResult('customBlock', '✗ 自定义积木块添加失败', true);
+                }
+            } catch (error) {
+                logResult('customBlock', `✗ 自定义积木块添加失败：${error.message}`, true);
+            }
+        }
+        
+        function testRemoveCustomBlock() {
+            try {
+                const currentData = dataService.getCurrentData();
+                if (!currentData || currentData.customBlocks.length === 0) {
+                    logResult('customBlock', '没有自定义积木块可删除');
+                    return;
+                }
+                
+                const blockToRemove = currentData.customBlocks[0];
+                dataService.removeCustomBlock(blockToRemove.id);
+                
+                const updatedData = dataService.getCurrentData();
+                if (updatedData && !updatedData.customBlocks.some(b => b.id === blockToRemove.id)) {
+                    logResult('customBlock', `✓ 自定义积木块删除成功\n已删除: ${blockToRemove.name}`);
+                } else {
+                    logResult('customBlock', '✗ 自定义积木块删除失败', true);
+                }
+            } catch (error) {
+                logResult('customBlock', `✗ 自定义积木块删除失败：${error.message}`, true);
+            }
+        }
+        
+        function testSaveToLocalStorage() {
+            try {
+                // 先确保有数据
+                if (!dataService.getCurrentData()) {
+                    dataService.initializeWorkspace();
+                }
+                
+                // 保存操作在updateWorkspaceState中自动执行
+                const testXml = '<xml><block type="save_test" x="50" y="50"></block></xml>';
+                dataService.updateWorkspaceState(testXml, [], [], []);
+                
+                // 检查localStorage
+                const savedData = localStorage.getItem('smartdog_workspace_data');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    logResult('storage', '✓ 数据已保存到本地存储\n' + JSON.stringify(parsed, null, 2));
+                } else {
+                    logResult('storage', '✗ 数据未保存到本地存储', true);
+                }
+            } catch (error) {
+                logResult('storage', `✗ 保存到本地存储失败：${error.message}`, true);
+            }
+        }
+        
+        function testLoadFromLocalStorage() {
+            try {
+                const loadedData = dataService.loadFromLocalStorage();
+                if (loadedData) {
+                    logResult('storage', '✓ 从本地存储加载成功\n' + JSON.stringify(loadedData, null, 2));
+                } else {
+                    logResult('storage', '没有找到本地存储数据（这可能是正常的）');
+                }
+            } catch (error) {
+                logResult('storage', `✗ 从本地存储加载失败：${error.message}`, true);
+            }
+        }
+        
+        function testClearLocalStorage() {
+            try {
+                dataService.clearLocalStorage();
+                const savedData = localStorage.getItem('smartdog_workspace_data');
+                if (!savedData) {
+                    logResult('storage', '✓ 本地存储已清除');
+                } else {
+                    logResult('storage', '✗ 本地存储清除失败', true);
+                }
+            } catch (error) {
+                logResult('storage', `✗ 清除本地存储失败：${error.message}`, true);
+            }
+        }
+        
+        async function testEventListeners() {
+            try {
+                let workspaceChanged = false;
+                let customBlocksChanged = false;
+                
+                const workspaceHandler = () => { 
+                    workspaceChanged = true; 
+                };
+                const customBlocksHandler = () => { 
+                    customBlocksChanged = true; 
+                };
+                
+                // 添加事件监听器
+                window.addEventListener('workspaceChanged', workspaceHandler);
+                window.addEventListener('customBlocksChanged', customBlocksHandler);
+                
+                // 清除可能存在的旧数据
+                dataService.clearLocalStorage();
+                
+                // 等待一小段时间确保清理完成
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                // 触发workspaceChanged事件
+                dataService.initializeWorkspace();
+                
+                // 等待事件触发
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                // 触发customBlocksChanged事件
+                dataService.addCustomBlock({
+                    id: 'event_test',
+                    name: '事件测试积木块',
+                    category: '测试',
+                    color: '#33FF57',
+                    inputs: [],
+                    code: '// 测试'
+                });
+                
+                // 等待事件触发
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
+                // 移除事件监听器
+                window.removeEventListener('workspaceChanged', workspaceHandler);
+                window.removeEventListener('customBlocksChanged', customBlocksHandler);
+                
+                if (workspaceChanged && customBlocksChanged) {
+                    logResult('event', '✓ 事件监听测试成功\n- workspaceChanged: 已触发\n- customBlocksChanged: 已触发');
+                } else {
+                    logResult('event', `✗ 事件监听测试失败\n- workspaceChanged: ${workspaceChanged ? '已触发' : '未触发'}\n- customBlocksChanged: ${customBlocksChanged ? '已触发' : '未触发'}`, true);
+                }
+            } catch (error) {
+                logResult('event', `✗ 事件监听测试失败：${error.message}`, true);
+            }
+        }
+        
+        async function testFullWorkflow() {
+            testResults = [];
+            const startTime = Date.now();
+            
+            // 执行完整测试流程
+            console.log('开始完整测试流程...');
+            
+            // 1. 初始化
+            testInitialize();
+            
+            // 2. 更新工作区
+            testUpdateWorkspace();
+            
+            // 3. 添加自定义积木块
+            testAddCustomBlock();
+            
+            // 4. 保存到本地存储
+            testSaveToLocalStorage();
+            
+            // 5. 清除并重新加载
+            testClearLocalStorage();
+            testLoadFromLocalStorage();
+            
+            // 6. 事件测试（异步）
+            await testEventListeners();
+            
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            
+            // 汇总结果
+            const successCount = testResults.filter(r => !r.isError).length;
+            const errorCount = testResults.filter(r => r.isError).length;
+            
+            let summary = `完整测试完成 (${duration}ms)\n`;
+            summary += `✓ 成功: ${successCount}\n`;
+            summary += `✗ 失败: ${errorCount}\n\n`;
+            summary += '详细结果:\n';
+            
+            testResults.forEach((result, index) => {
+                summary += `${index + 1}. ${result.section}: ${result.isError ? '✗' : '✓'} ${result.message.split('\n')[0]}\n`;
+            });
+            
+            logResult('fullTest', summary, errorCount > 0);
+        }
+    </script>
+</body>
+</html>

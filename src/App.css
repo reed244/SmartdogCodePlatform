@@ -23,6 +23,44 @@
   opacity: 0.9;
 }
 
+.header-actions {
+  margin-top: 15px;
+}
+
+.toggle-custom-blocks {
+  background-color: #FF9800;
+}
+
+.toggle-custom-blocks:hover {
+  background-color: #F57C00;
+}
+
+.toggle-debug-panel {
+  background-color: #2196F3;
+}
+
+.toggle-debug-panel:hover {
+  background-color: #1976D2;
+}
+
+.toggle-code-assistant {
+  background-color: #9C27B0;
+}
+
+.toggle-code-assistant:hover {
+  background-color: #7B1FA2;
+}
+
+.custom-blocks-section,
+.debug-section,
+.code-assistant-section {
+  margin: 0 20px 20px 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
 .App-main {
   display: flex;
   flex: 1;

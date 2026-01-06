@@ -14,6 +14,26 @@ interface VariableValue {
   type: string;
 }
 
+// 调试样式常量
+const DEBUG_STYLES = {
+  default: {},
+  highlighted: {
+    colourPrimary: '#ff9900',
+    colourSecondary: '#ffcc66',
+    colourTertiary: '#ff9933'
+  },
+  breakpoint: {
+    colourPrimary: '#ff4444',
+    colourSecondary: '#ff8888',
+    colourTertiary: '#ff6666'
+  },
+  disabled: {
+    colourPrimary: '#cccccc',
+    colourSecondary: '#dddddd',
+    colourTertiary: '#bbbbbb'
+  }
+};
+
 const DebugPanel: React.FC = () => {
   const [isDebugging, setIsDebugging] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -104,9 +124,9 @@ const DebugPanel: React.FC = () => {
       const block = workspaceRef.current?.getBlockById(blockId);
       if (block) {
         if (existingBreakpoint.enabled) {
-          block.setStyle('blocklyDisabled' as any);
+          block.setStyle(DEBUG_STYLES.disabled as any);
         } else {
-          block.setStyle(null as any);
+          block.setStyle(DEBUG_STYLES.default as any);
         }
       }
     } else {
@@ -121,7 +141,7 @@ const DebugPanel: React.FC = () => {
       // 标记块
       const block = workspaceRef.current?.getBlockById(blockId);
       if (block) {
-        block.setStyle('blocklyBreakpoint' as any);
+        block.setStyle(DEBUG_STYLES.breakpoint as any);
       }
     }
   };
@@ -259,18 +279,35 @@ const DebugPanel: React.FC = () => {
 
   // 高亮块
   const highlightBlock = (blockId: string) => {
-    // 清除之前的高亮
-    const allBlocks = workspaceRef.current?.getAllBlocks(false) || [];
-    allBlocks.forEach(block => {
-      if (block.id !== blockId) {
-        block.setStyle(null as any);
-      }
-    });
+    if (!workspaceRef.current) return;
+    
+    try {
+      // 清除之前的高亮
+      const allBlocks = workspaceRef.current.getAllBlocks(false);
+      allBlocks.forEach(block => {
+        if (!block) return;
+        if (block.id !== blockId) {
+          try {
+            // 使用默认样式清除高亮
+            block.setStyle(DEBUG_STYLES.default as any);
+          } catch (error) {
+            console.warn('清除块样式失败:', error);
+          }
+        }
+      });
 
-    // 高亮当前块
-    const block = workspaceRef.current?.getBlockById(blockId);
-    if (block) {
-      block.setStyle('blocklyHighlighted' as any);
+      // 高亮当前块
+      const block = workspaceRef.current.getBlockById(blockId);
+      if (block) {
+        try {
+          // 使用高亮样式
+          block.setStyle(DEBUG_STYLES.highlighted as any);
+        } catch (error) {
+          console.warn('高亮块失败:', error);
+        }
+      }
+    } catch (error) {
+      console.error('高亮块过程中出错:', error);
     }
   };
 
@@ -326,7 +363,7 @@ const DebugPanel: React.FC = () => {
     // 清除所有高亮
     const allBlocks = workspaceRef.current?.getAllBlocks(false) || [];
     allBlocks.forEach(block => {
-      block.setStyle(null as any);
+      block.setStyle(DEBUG_STYLES.default as any);
     });
     
     addToLog('调试已停止');
@@ -339,7 +376,7 @@ const DebugPanel: React.FC = () => {
     // 清除所有块的断点样式
     const allBlocks = workspaceRef.current?.getAllBlocks(false) || [];
     allBlocks.forEach(block => {
-      block.setStyle(null as any);
+      block.setStyle(DEBUG_STYLES.default as any);
     });
     
     addToLog('所有断点已清除');

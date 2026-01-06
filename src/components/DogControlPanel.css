@@ -1,0 +1,223 @@
+.dog-control-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.dog-control-panel h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #4a6fa5;
+  padding-bottom: 10px;
+}
+
+.dog-control-panel h3 {
+  color: #34495e;
+  margin: 20px 0 15px;
+  font-size: 1.1rem;
+}
+
+.connection-section {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.connection-inputs {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-group label {
+  min-width: 60px;
+  font-weight: 500;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #4a6fa5;
+  box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #eee;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.connection-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.connection-buttons button {
+  flex: 1;
+}
+
+.disconnect-btn {
+  background-color: #e74c3c;
+}
+
+.disconnect-btn:hover {
+  background-color: #c0392b;
+}
+
+.status-section {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.status-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.status-value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.battery-container {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  background-color: #ecf0f1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.battery-level {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  transition: width 0.5s ease;
+}
+
+.battery-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.sensors-section {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.sensors-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.sensor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.sensor-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.sensor-value {
+  font-weight: 600;
+  color: #2c3e50;
+  font-family: monospace;
+}
+
+.quick-controls {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.control-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.control-buttons button {
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .control-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .input-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .input-group label {
+    min-width: auto;
+  }
+  
+  .input-group input {
+    width: 100%;
+  }
+}

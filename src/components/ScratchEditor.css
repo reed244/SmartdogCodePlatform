@@ -1,0 +1,57 @@
+.scratch-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.editor-toolbar button {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.blockly-container {
+  flex: 1;
+  min-height: 500px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-info {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.editor-info p {
+  margin: 5px 0;
+}
+
+.blocklyTreeLabel {
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+}
+
+.blocklyFlyoutBackground {
+  fill: #f8f9fa;
+  fill-opacity: 0.8;
+}
+
+.blocklyScrollbarHandle {
+  fill: #4a6fa5;
+}
+
+.blocklySvg {
+  background-color: #fff;
+}

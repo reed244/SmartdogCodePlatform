@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
+import { dataService, CustomBlockDefinition } from '../services/dataService';
 import './CustomBlockManager.css';
 
-interface CustomBlock {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  color: string;
-  inputs: BlockInput[];
-  output: string | null;
-  code: string;
-}
-
+// 兼容性类型定义
 interface BlockInput {
   name: string;
   type: 'field_input' | 'field_number' | 'field_dropdown' | 'input_value';
@@ -23,9 +14,9 @@ interface BlockInput {
 }
 
 const CustomBlockManager: React.FC = () => {
-  const [customBlocks, setCustomBlocks] = useState<CustomBlock[]>([]);
+  const [customBlocks, setCustomBlocks] = useState<CustomBlockDefinition[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingBlock, setEditingBlock] = useState<CustomBlock | null>(null);
+  const [editingBlock, setEditingBlock] = useState<CustomBlockDefinition | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -42,20 +33,62 @@ const CustomBlockManager: React.FC = () => {
 
   // 加载保存的自定义积木块
   useEffect(() => {
-    const savedBlocks = localStorage.getItem('smartdog_custom_blocks');
-    if (savedBlocks) {
-      try {
-        const blocks = JSON.parse(savedBlocks);
+    const loadAndMigrateBlocks = () => {
+      // 首先从dataService加载
+      const currentData = dataService.getCurrentData();
+      let blocks: CustomBlockDefinition[] = [];
+      
+      if (currentData && currentData.customBlocks.length > 0) {
+        // 使用dataService中的数据
+        blocks = currentData.customBlocks;
+      } else {
+        // 尝试从旧的localStorage格式迁移数据
+        const savedBlocks = localStorage.getItem('smartdog_custom_blocks');
+        if (savedBlocks) {
+          try {
+            const oldBlocks = JSON.parse(savedBlocks);
+            // 转换旧格式到新格式
+            blocks = oldBlocks.map((oldBlock: any) => ({
+              id: oldBlock.id,
+              name: oldBlock.name,
+              description: oldBlock.description || '',
+              category: oldBlock.category || '自定义',
+              color: oldBlock.color || '#FF9800',
+              inputs: oldBlock.inputs?.map((input: any) => ({
+                type: input.type,
+                name: input.name,
+                label: input.label || input.name,
+                value: input.defaultValue !== undefined ? input.defaultValue : input.value,
+                options: input.options
+              })) || [],
+              code: oldBlock.code || '// 自定义代码\nreturn null;',
+              output: oldBlock.output || null
+            }));
+            
+            // 迁移到dataService
+            if (blocks.length > 0) {
+              dataService.updateCustomBlocks(blocks);
+              // 清除旧的localStorage数据
+              localStorage.removeItem('smartdog_custom_blocks');
+              console.log('已迁移自定义积木块数据到dataService');
+            }
+          } catch (error) {
+            console.error('迁移自定义积木块数据失败:', error);
+          }
+        }
+      }
+      
+      if (blocks.length > 0) {
         setCustomBlocks(blocks);
         registerCustomBlocks(blocks);
-      } catch (error) {
-        console.error('加载自定义积木块失败:', error);
       }
-    }
+    };
+    
+    loadAndMigrateBlocks();
   }, []);
 
   // 注册自定义积木块到Blockly
-  const registerCustomBlocks = (blocks: CustomBlock[]) => {
+  const registerCustomBlocks = (blocks: CustomBlockDefinition[]) => {
     blocks.forEach(block => {
       const blockType = `custom_${block.id}`;
       
@@ -72,7 +105,7 @@ const CustomBlockManager: React.FC = () => {
             type: blockType,
             message0: block.name,
             colour: block.color,
-            tooltip: block.description,
+            tooltip: block.description || block.name,
             helpUrl: ''
           };
 
@@ -82,21 +115,36 @@ const CustomBlockManager: React.FC = () => {
           
           block.inputs.forEach((input, index) => {
             const placeholder = `%${index + 1}`;
-            message = message.replace(`{${input.name}}`, placeholder);
+            // 转义input.name中的正则表达式特殊字符
+            const escapedName = input.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const pattern = new RegExp(`\\{${escapedName}\\}`, 'g');
+            
+            // 检查消息中是否包含这个输入字段的占位符
+            if (message.match(pattern)) {
+              // 如果包含，进行全局替换
+              message = message.replace(pattern, placeholder);
+            } else {
+              // 如果不包含，在消息末尾添加占位符
+              // 确保消息末尾有空格分隔
+              if (message.trim().length > 0 && !message.endsWith(' ')) {
+                message += ' ';
+              }
+              message += placeholder;
+            }
             
             switch (input.type) {
               case 'field_input':
                 args0.push({
                   type: 'field_input',
                   name: input.name,
-                  text: input.defaultValue || ''
+                  text: input.value !== undefined ? String(input.value) : ''
                 });
                 break;
               case 'field_number':
                 args0.push({
                   type: 'field_number',
                   name: input.name,
-                  value: parseFloat(input.defaultValue || '0')
+                  value: input.value !== undefined ? Number(input.value) : 0
                 });
                 break;
               case 'field_dropdown':
@@ -189,18 +237,28 @@ const CustomBlockManager: React.FC = () => {
     e.preventDefault();
     
     const blockId = editingBlock?.id || `block_${Date.now()}`;
-    const newBlock: CustomBlock = {
+    
+    // 转换输入格式为CustomBlockDefinition格式
+    const convertedInputs = inputs.map(input => ({
+      type: input.type,
+      name: input.name,
+      label: input.label,
+      value: input.defaultValue,
+      options: input.options
+    }));
+    
+    const newBlock: CustomBlockDefinition = {
       id: blockId,
       name: formData.name,
-      description: formData.description,
+      description: formData.description || undefined,
       category: formData.category,
       color: formData.color,
-      inputs: inputs,
-      output: formData.output === 'null' ? null : formData.output,
-      code: formData.code
+      inputs: convertedInputs,
+      code: formData.code,
+      output: formData.output === 'null' ? null : formData.output
     };
 
-    let updatedBlocks;
+    let updatedBlocks: CustomBlockDefinition[];
     if (editingBlock) {
       updatedBlocks = customBlocks.map(block => 
         block.id === editingBlock.id ? newBlock : block
@@ -210,11 +268,12 @@ const CustomBlockManager: React.FC = () => {
     }
 
     setCustomBlocks(updatedBlocks);
-    localStorage.setItem('smartdog_custom_blocks', JSON.stringify(updatedBlocks));
+    // 更新到dataService
+    dataService.updateCustomBlocks(updatedBlocks);
     registerCustomBlocks([newBlock]);
     
-    // 触发自定义积木块更新事件
-    window.dispatchEvent(new CustomEvent('customBlocksUpdated'));
+    // 注意：dataService.updateCustomBlocks()会触发'customBlocksChanged'事件
+    // ScratchEditor.tsx监听该事件以更新工具箱
     
     // 重置表单
     setFormData({
@@ -230,16 +289,24 @@ const CustomBlockManager: React.FC = () => {
     setEditingBlock(null);
   };
 
-  const editBlock = (block: CustomBlock) => {
+  const editBlock = (block: CustomBlockDefinition) => {
     setFormData({
       name: block.name,
-      description: block.description,
+      description: block.description || '',
       category: block.category,
       color: block.color,
       output: block.output || 'null',
       code: block.code
     });
-    setInputs(block.inputs);
+    // 转换inputs格式为BlockInput[]
+    const convertedInputs = block.inputs.map(input => ({
+      name: input.name,
+      type: input.type as 'field_input' | 'field_number' | 'field_dropdown' | 'input_value',
+      label: input.label || input.name,
+      defaultValue: input.value !== undefined ? String(input.value) : '',
+      options: input.options as string[][]
+    }));
+    setInputs(convertedInputs);
     setEditingBlock(block);
     setShowForm(true);
   };
@@ -248,15 +315,16 @@ const CustomBlockManager: React.FC = () => {
     if (window.confirm('确定要删除这个自定义积木块吗？')) {
       const updatedBlocks = customBlocks.filter(block => block.id !== blockId);
       setCustomBlocks(updatedBlocks);
-      localStorage.setItem('smartdog_custom_blocks', JSON.stringify(updatedBlocks));
+      // 更新到dataService
+      dataService.updateCustomBlocks(updatedBlocks);
       
       // 从Blockly中移除
       const blockType = `custom_${blockId}`;
       delete Blockly.Blocks[blockType];
       delete javascriptGenerator.forBlock[blockType];
       
-      // 触发自定义积木块更新事件
-      window.dispatchEvent(new CustomEvent('customBlocksUpdated'));
+      // 注意：dataService.updateCustomBlocks()会触发'customBlocksChanged'事件
+      // ScratchEditor.tsx监听该事件以更新工具箱
     }
   };
 
@@ -289,16 +357,32 @@ const CustomBlockManager: React.FC = () => {
     reader.onload = (e) => {
       try {
         const importedBlocks = JSON.parse(e.target?.result as string);
-        const updatedBlocks = [...customBlocks, ...importedBlocks];
-        setCustomBlocks(updatedBlocks);
-        localStorage.setItem('smartdog_custom_blocks', JSON.stringify(updatedBlocks));
-        registerCustomBlocks(importedBlocks);
+        // 验证导入的数据格式
+        if (!Array.isArray(importedBlocks)) {
+          throw new Error('导入的数据不是数组格式');
+        }
         
-        // 触发自定义积木块更新事件
-        window.dispatchEvent(new CustomEvent('customBlocksUpdated'));
+        // 确保每个块都有必要的字段
+        const validBlocks = importedBlocks.map((block: any) => ({
+          id: block.id || `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: block.name || '未命名积木块',
+          description: block.description,
+          category: block.category || '自定义',
+          color: block.color || '#FF9800',
+          inputs: block.inputs || [],
+          code: block.code || '// 自定义代码\nreturn null;',
+          output: block.output
+        }));
+        
+        const updatedBlocks = [...customBlocks, ...validBlocks];
+        setCustomBlocks(updatedBlocks);
+        // 更新到dataService
+        dataService.updateCustomBlocks(updatedBlocks);
+        registerCustomBlocks(validBlocks);
+        
         alert('自定义积木块导入成功！');
       } catch (error) {
-        alert('导入失败：文件格式不正确');
+        alert(`导入失败：${error instanceof Error ? error.message : '文件格式不正确'}`);
       }
     };
     reader.readAsText(file);
@@ -472,9 +556,9 @@ const CustomBlockManager: React.FC = () => {
                   <h5>{block.name}</h5>
                   <span className="block-category">{block.category}</span>
                 </div>
-                <p className="block-description">{block.description}</p>
+                {block.description && <p className="block-description">{block.description}</p>}
                 <div className="block-inputs">
-                  <small>输入字段：{block.inputs.map(input => input.label).join(', ')}</small>
+                  <small>输入字段：{block.inputs.map(input => input.label || input.name).join(', ')}</small>
                 </div>
                 <div className="block-actions">
                   <button onClick={() => editBlock(block)}>编辑</button>

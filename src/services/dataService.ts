@@ -6,15 +6,18 @@
 export interface CustomBlockDefinition {
   id: string;                    // 积木块唯一标识
   name: string;                  // 积木块显示名称
+  description?: string;          // 积木块描述（可选）
   category: string;              // 所属分类
   color: string;                 // 颜色（十六进制）
   inputs: Array<{                // 输入参数
-    type: string;               // 参数类型 (field_number, field_text, etc.)
+    type: string;               // 参数类型 (field_input, field_number, field_dropdown, input_value, etc.)
     name: string;               // 参数名称
+    label?: string;             // 显示标签（可选）
     value?: any;               // 默认值
     options?: any[];           // 下拉选项
   }>;
   code: string;                  // 生成的代码模板
+  output?: string | null;       // 输出类型（可选，null表示无输出）
 }
 
 // 工作区状态

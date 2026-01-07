@@ -71,8 +71,47 @@ npm install
 
 ### 2. 启动应用
 
+#### 详细启动步骤
+
+**方法 1：Python 脚本启动（推荐）**
+
 ```bash
+# 确保已安装Python 3
+python start.py
+# 或
+python3 start.py
+```
+
+**方法 2：Windows 批处理启动**
+
+```bash
+# 双击 start.bat 或运行：
+start.bat
+```
+
+**方法 3：原始 Shell 脚本启动**
+
+```bash
+# Linux/macOS
+chmod +x start.sh  # 首次运行需要添加执行权限
 ./start.sh
+```
+
+#### 手动启动（适用于开发者）
+
+```bash
+# 安装后端依赖
+cd backend
+npm install
+cd ..
+
+# 启动后端服务
+cd backend
+npm start &
+cd ..
+
+# 启动前端服务
+npm start
 ```
 
 ### 3. 访问应用
@@ -80,12 +119,6 @@ npm install
 打开浏览器访问：http://localhost:3000
 
 > **注意**：如果需要连接实际的智能小狗硬件，请同时启动后端服务
-
-```bash
-# 启动后端服务（可选，用于硬件连接）
-cd backend
-npm start
-```
 
 ## 📖 使用指南
 

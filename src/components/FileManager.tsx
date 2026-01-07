@@ -80,7 +80,11 @@ const FileManager: React.FC<FileManagerProps> = ({
       return;
     }
     
-    const filename = prompt('请输入文件名:', 'smartdog_workspace.json');
+    // 生成默认文件名：工作区名称 + 时间戳
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_').replace(/\..*$/, '');
+    const workspaceName = currentData.name || 'smartdog_workspace';
+    const defaultFilename = `${workspaceName}_${timestamp}.json`;
+    const filename = prompt('请输入文件名:', defaultFilename);
     if (filename) {
       try {
         // 创建Blob对象

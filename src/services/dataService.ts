@@ -27,6 +27,7 @@ export interface WorkspaceState {
 
 // 简化数据结构 - 只包含工作区和自定义积木块
 export interface WorkspaceData {
+  name?: string;              // 工作区名称（可选）
   workspace: WorkspaceState;   // 工作区状态
   customBlocks: CustomBlockDefinition[]; // 自定义积木块
 }
@@ -55,6 +56,7 @@ class DataService {
   // 初始化工作区数据
   initializeWorkspace(): WorkspaceData {
     this.currentData = {
+      name: '未命名工作区',
       workspace: {
         xml: '',
         blocks: [],

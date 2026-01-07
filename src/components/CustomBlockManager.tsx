@@ -263,7 +263,17 @@ const CustomBlockManager: React.FC = () => {
   const exportBlocks = () => {
     const dataStr = JSON.stringify(customBlocks, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'smartdog_custom_blocks.json';
+    // 生成描述性默认文件名
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_').replace(/\..*$/, '');
+    let exportFileDefaultName;
+    if (customBlocks.length === 1) {
+      // 如果只有一个积木块，使用其名称
+      const blockName = customBlocks[0].name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+      exportFileDefaultName = `custom_block_${blockName}_${timestamp}.json`;
+    } else {
+      // 多个积木块使用通用名称
+      exportFileDefaultName = `custom_blocks_${timestamp}.json`;
+    }
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
